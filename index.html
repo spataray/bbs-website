@@ -124,11 +124,20 @@ Command >> `
   // Initial Boot
   typeEffect(screens.main);
   
-  // Add this to your script to play the connection sound on first interaction
-const connectSound = new Audio('https://www.soundjay.com/communication/modem-connect-01.mp3');
+ // 1. Define the audio source
+const modemSound = new Audio('https://www.telephoneworld.org/sounds/modem144.mp3');
+
+// 2. Play it when the user first clicks the screen
 document.body.addEventListener('click', () => {
-    connectSound.play();
-}, { once: true });
+    // Only play if it hasn't started yet
+    if (modemSound.paused) {
+        modemSound.volume = 0.5; // Set to 50% volume
+        modemSound.play().catch(error => {
+            console.log("Browser blocked autoplay. Click again!");
+        });
+    }
+}, { once: true }); // '{ once: true }' ensures it only plays the first time you click
+
 
 </script>
 
