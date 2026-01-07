@@ -1,4 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    background-color: #000;
+    color: #AAA;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    overflow: hidden;
+  }
+  #terminal { width: 100%; max-width: 700px; white-space: pre-wrap; }
+  .yellow { color: #FFFF55; font-weight: bold; }
+  .cyan { color: #00AAAA; }
+  .green { color: #55FF55; }
+  .cursor { display: inline-block; width: 10px; height: 18px; background-color: #AAA; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  #hidden-input { position: absolute; opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body onclick="startDialing()">
+
+<input type="text" id="hidden-input" autocomplete="off">
+<div id="terminal">
+<span class="yellow">*** TERMINAL READY ***</span>
+Click anywhere to dial...
+<span class="cursor"></span>
+</div>
+
+<script>
+  const terminal = document.getElementById('terminal');
+  const input = document.getElementById('hidden-input');
+  
+  // Use a reliable modem sound link
+  const modemSound = new Audio('https://www.soundjay.com/communication/modem-connect-01.mp3');
+  
+  let connected = false;
+
   async function startDialing() {
+    if (connected) {
+        input.focus();
+        return;
+    }
+    
+    // 1. Initial Dialing Text
+    terminal.innerHTML = "ATDT 555-8291\n";
+    modemSound.play();
+    
+    // 2. Wait for the sound to reach the "handshake" part (simulated delay)
+    await new Promise(r => setTimeout(r, 3000));
+    terminal.innerHTML += "DIALING...\n";
+    
+    await new Promise(r => setTimeout(r, 4000));
+    terminal.innerHTML += "<span class='green'>CONNECT 14400 / ARQ</span>\n\n";
+    
+    await new Promise(r => setTimeout(r, 1000));
+    connected = true;
+    input.focus();
+    showMainMenu();
+  }
+
+  function showMainMenu() {
+    const menu = `
+<span class="cyan">═══ WELCOME TO THE RETRO-NET BBS ══════════════</span>
+ <span class="yellow">[1]</span> Message Board
+ <span class="yellow">[2]</span> File Library
+ <span class="yellow">[3]</span> Log Off
+<span class="cyan">═══════════════════════════════════════════════</span>
+Command >> <span class="cursor"></span>`;
+    terminal.innerHTML = menu;
+  }
+
+  // Handle keyboard input after connection
+  input.addEventListener('input', (e) => {
+    if (!connected) return;
+    const val = e.target.value;
+    input.value = ""; 
+    
+    if (val === '1') {
+        terminal.innerHTML = "LOADING MESSAGES...\n[M] Back to Main Menu";
+    } else if (val.toLowerCase() === 'm') {
+        showMainMenu();
+    }
+    // Add more logic here for other keys!
+  });
+    async function startDialing() {
     if (connected) return;
     
     // The "Hayes" command to dial
@@ -20,3 +108,7 @@
     input.focus();
     showMainMenu();
   }
+
+</script>
+</body>
+</html>
