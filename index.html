@@ -4,84 +4,125 @@
 <style>
   body {
     background-color: #000;
-    color: #AAA; /* Classic Grey */
+    color: #AAA;
     font-family: 'Courier New', monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 50px;
-    overflow: hidden;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* The hidden input that captures everything */
+  #hidden-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
 
   #terminal {
-    width: 640px;
-    white-space: pre; /* Keeps the ASCII spacing perfect */
+    width: 100%;
+    max-width: 700px;
+    white-space: pre-wrap; /* Allows text to wrap on small screens */
+    word-wrap: break-word;
   }
 
   .yellow { color: #FFFF55; font-weight: bold; }
   .cyan { color: #00AAAA; }
+  .red { color: #AA0000; }
   .cursor {
-    animation: blink 1s infinite;
+    display: inline-block;
+    width: 10px;
+    height: 18px;
     background-color: #AAA;
-    color: #000;
+    animation: blink 1s infinite;
+    vertical-align: middle;
   }
 
-  @keyframes blink { 
-    0%, 49% { opacity: 1; } 
-    50%, 100% { opacity: 0; } 
-  }
+  @keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
-<body>
+<body onclick="document.getElementById('hidden-input').focus();">
 
-<div id="terminal">
-</div>
+<input type="text" id="hidden-input" autofocus autocomplete="off">
+
+<div id="terminal"></div>
 
 <script>
   const terminal = document.getElementById('terminal');
+  const input = document.getElementById('hidden-input');
 
-  // Define our screens
   const screens = {
     main: `
-<span class="cyan">═══ Main Menu ══════════════════════════════════</span>
+<span class="cyan">═══ LEGEND OF THE 1400 BAUD BBS ═══════════════</span>
  <span class="yellow">[1]</span> Read the Message Base
  <span class="yellow">[2]</span> File Library (Downloads)
  <span class="yellow">[3]</span> Log Off / Exit
 <span class="cyan">════════════════════════════════════════════════</span>
-Command <span class="cursor">&nbsp;</span>`,
+Command >> `,
 
     messages: `
-<span class="cyan">═══ Message Base ═══════════════════════════════</span>
+<span class="cyan">═══ MESSAGE BASE ═══════════════════════════════</span>
  1. Welcome to the board! (From: Sysop)
  2. Anyone have the v.32bis init string?
  
  <span class="yellow">[M]</span> Main Menu
-Command <span class="cursor">&nbsp;</span>`,
+Command >> `,
 
     files: `
-<span class="cyan">═══ File Library ═══════════════════════════════</span>
+<span class="cyan">═══ FILE LIBRARY ═══════════════════════════════</span>
  * PROCOMM2.ZIP - Terminal Software
  * PKZIP.EXE    - Compression Utility
  
  <span class="yellow">[M]</span> Main Menu
-Command <span class="cursor">&nbsp;</span>`
+Command >> `
   };
 
-  // Function to change screens
-  function showScreen(key) {
-    if (key === '1') terminal.innerHTML = screens.messages;
-    else if (key === '2') terminal.innerHTML = screens.files;
-    else if (key === '3') terminal.innerHTML = "NO CARRIER... <br><br> (Please refresh to reconnect)";
-    else if (key.toLowerCase() === 'm') terminal.innerHTML = screens.main;
+  let isTyping = false;
+
+  // This function creates that slow 1400 baud "scroll"
+  async function typeEffect(text) {
+    isTyping = true;
+    terminal.innerHTML = "";
+    // Split by tags to keep colors working, or characters
+    const div = document.createElement('div');
+    div.innerHTML = text;
+    const content = div.childNodes;
+
+    for (let node of content) {
+      const wrapper = document.createElement('span');
+      if (node.nodeType === 3) { // Text node
+        for (let char of node.textContent) {
+          terminal.innerHTML += char;
+          // 1400 baud is roughly 175 characters per second
+          await new Promise(r => setTimeout(r, 10)); 
+        }
+      } else { // HTML element (span for colors)
+        wrapper.className = node.className;
+        terminal.appendChild(wrapper);
+        for (let char of node.textContent) {
+          wrapper.innerHTML += char;
+          await new Promise(r => setTimeout(r, 10));
+        }
+      }
+    }
+    terminal.innerHTML += '<span class="cursor"></span>';
+    isTyping = false;
   }
 
-  // Initial load
-  terminal.innerHTML = screens.main;
+  input.addEventListener('input', (e) => {
+    if (isTyping) return;
+    const val = e.target.value.toLowerCase();
+    input.value = ""; // Reset hidden input
 
-  // Listen for key presses
-  document.addEventListener('keydown', (e) => {
-    showScreen(e.key);
+    if (val.includes('1')) typeEffect(screens.messages);
+    else if (val.includes('2')) typeEffect(screens.files);
+    else if (val.includes('3')) typeEffect('<span class="red">NO CARRIER...</span>');
+    else if (val.includes('m')) typeEffect(screens.main);
   });
+
+  // Initial Boot
+  typeEffect(screens.main);
 </script>
 
 </body>
