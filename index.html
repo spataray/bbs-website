@@ -1,23 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
 <style>
   body {
-    background-color: #000; /* Deep black background */
-    color: #AAA;           /* Classic "Grey" text */
+    background-color: #000;
+    color: #AAA; /* Classic Grey */
     font-family: 'Courier New', monospace;
-    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px;
+    overflow: hidden;
   }
-  .bright-blue { color: #5555FF; font-weight: bold; }
-  .bright-yellow { color: #FFFF55; font-weight: bold; }
-  .block-art { white-space: pre; }
+
+  #terminal {
+    width: 640px;
+    white-space: pre; /* Keeps the ASCII spacing perfect */
+  }
+
+  .yellow { color: #FFFF55; font-weight: bold; }
+  .cyan { color: #00AAAA; }
+  .cursor {
+    animation: blink 1s infinite;
+    background-color: #AAA;
+    color: #000;
+  }
+
+  @keyframes blink { 
+    0%, 49% { opacity: 1; } 
+    50%, 100% { opacity: 0; } 
+  }
 </style>
+</head>
+<body>
 
-<div class="block-art">
-<span class="bright-blue">█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█</span>
-<span class="bright-yellow">  WELCOME TO MY 1990 BBS    </span>
-<span class="bright-blue">█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█</span>
-
-[1] Read Messages
-[2] Download Files
-[3] Enter the Vault
-
-Command >> _
+<div id="terminal">
 </div>
+
+<script>
+  const terminal = document.getElementById('terminal');
+
+  // Define our screens
+  const screens = {
+    main: `
+<span class="cyan">═══ Main Menu ══════════════════════════════════</span>
+ <span class="yellow">[1]</span> Read the Message Base
+ <span class="yellow">[2]</span> File Library (Downloads)
+ <span class="yellow">[3]</span> Log Off / Exit
+<span class="cyan">════════════════════════════════════════════════</span>
+Command <span class="cursor">&nbsp;</span>`,
+
+    messages: `
+<span class="cyan">═══ Message Base ═══════════════════════════════</span>
+ 1. Welcome to the board! (From: Sysop)
+ 2. Anyone have the v.32bis init string?
+ 
+ <span class="yellow">[M]</span> Main Menu
+Command <span class="cursor">&nbsp;</span>`,
+
+    files: `
+<span class="cyan">═══ File Library ═══════════════════════════════</span>
+ * PROCOMM2.ZIP - Terminal Software
+ * PKZIP.EXE    - Compression Utility
+ 
+ <span class="yellow">[M]</span> Main Menu
+Command <span class="cursor">&nbsp;</span>`
+  };
+
+  // Function to change screens
+  function showScreen(key) {
+    if (key === '1') terminal.innerHTML = screens.messages;
+    else if (key === '2') terminal.innerHTML = screens.files;
+    else if (key === '3') terminal.innerHTML = "NO CARRIER... <br><br> (Please refresh to reconnect)";
+    else if (key.toLowerCase() === 'm') terminal.innerHTML = screens.main;
+  }
+
+  // Initial load
+  terminal.innerHTML = screens.main;
+
+  // Listen for key presses
+  document.addEventListener('keydown', (e) => {
+    showScreen(e.key);
+  });
+</script>
+
+</body>
+</html>
