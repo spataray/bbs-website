@@ -123,6 +123,13 @@ Command >> `
 
   // Initial Boot
   typeEffect(screens.main);
+  
+  // Add this to your script to play the connection sound on first interaction
+const connectSound = new Audio('https://www.soundjay.com/communication/modem-connect-01.mp3');
+document.body.addEventListener('click', () => {
+    connectSound.play();
+}, { once: true });
+
 </script>
 
 </body>
