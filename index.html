@@ -118,11 +118,114 @@
 <span class="f-br-blue">═══</span><span class="f-br-white"> WILDCAT! BBS MAIN MENU </span><span class="f-br-blue">══════════════════════════</span>
  <span class="f-br-yellow">[1]</span> <span class="f-br-cyan">Message Board</span>
  <span class="f-br-yellow">[2]</span> <span class="f-br-cyan">File Library</span>
- <span class="f-br-yellow">[3]</span> <span class="f-br-cyan">System Information</span>
- <span class="f-br-yellow">[4]</span> <span class="f-br-red">Log Off</span>
+ <span class="f-br-yellow">[D]</span> <span class="f-br-magenta">Door Games (NEW!)</span>
+ <span class="f-br-yellow">[S]</span> <span class="f-br-cyan">System Information</span>
+ <span class="f-br-yellow">[Q]</span> <span class="f-br-red">Log Off</span>
 <span class="f-br-blue">════════════════════════════════════════════════════════</span>
 <span class="f-white">Command >> </span><span class="cursor"></span>`;
   }
+
+  function showDoorGames() {
+    currentState = 'DOORS';
+    terminal.innerHTML = `
+<span class="f-br-blue">═══</span><span class="f-br-white"> EXTERNAL PROGRAMS (DOOR GAMES) </span><span class="f-br-blue">══════════════════</span>
+ <span class="f-br-yellow">[1]</span> <span class="f-br-red">Legend of the Red Dragon (L.O.R.D.)</span> <span class="f-white">- In Use (Node 2)</span>
+ <span class="f-br-yellow">[2]</span> <span class="f-br-cyan">TradeWars 2002</span> <span class="f-white">- In Use (Node 3)</span>
+ <span class="f-br-yellow">[3]</span> <span class="f-br-magenta">Leisure Suit Larry (Text Adv.)</span> <span class="f-br-green">- AVAILABLE!</span>
+ <span class="f-br-yellow">[M]</span> <span class="f-br-white">Back to Main Menu</span>
+<span class="f-br-blue">════════════════════════════════════════════════════════</span>
+<span class="f-white">Select Game >> </span><span class="cursor"></span>`;
+  }
+
+  // --- LEISURE SUIT LARRY LOGIC ---
+  let larryState = 0;
+  function startLarry() {
+    currentState = 'LARRY_AGE';
+    larryState = 1;
+    terminal.innerHTML = `
+<span class="f-br-magenta">========================================================</span>
+<span class="f-br-white">        LEISURE SUIT LARRY - AGE VERIFICATION</span>
+<span class="f-br-magenta">========================================================</span>
+<span class="f-white">This game contains mature themes. To prove you are an adult,
+you must answer the following questions.</span>
+
+<span class="f-br-yellow">Question 1:</span> <span class="f-cyan">Who is the current President of the United States?</span>
+<span class="f-br-white">A.</span> <span class="f-white">Ronald Reagan</span>
+<span class="f-br-white">B.</span> <span class="f-white">George Bush</span>
+<span class="f-br-white">C.</span> <span class="f-white">Bill Clinton</span>
+<span class="f-br-white">D.</span> <span class="f-white">Jimmy Carter</span>
+
+<span class="f-white">Your Answer (A-D) >> </span><span class="cursor"></span>`;
+  }
+
+  function handleLarryAge(val) {
+      if (larryState === 1) {
+          larryState = 2;
+          terminal.innerHTML = `
+<span class="f-br-magenta">========================================================</span>
+<span class="f-br-white">        LEISURE SUIT LARRY - AGE VERIFICATION</span>
+<span class="f-br-magenta">========================================================</span>
+<span class="f-br-yellow">Question 2:</span> <span class="f-cyan">What was the popular catchphrase from Wendy's commercials?</span>
+<span class="f-br-white">A.</span> <span class="f-white">"I'm lovin' it!"</span>
+<span class="f-br-white">B.</span> <span class="f-white">"Where's the beef?"</span>
+<span class="f-br-white">C.</span> <span class="f-white">"Have it your way."</span>
+<span class="f-br-white">D.</span> <span class="f-white">"Yo quiero Taco Bell."</span>
+
+<span class="f-white">Your Answer (A-D) >> </span><span class="cursor"></span>`;
+      } else if (larryState === 2) {
+          currentState = 'LARRY_GAME';
+          terminal.innerHTML = `
+<span class="f-br-green">*** VERIFICATION PASSED. LOADING GAME ENGINE... ***</span>
+
+<span class="f-br-magenta">========================================================</span>
+<span class="f-br-white">      LEISURE SUIT LARRY IN THE LAND OF THE LOUNGE LIZARDS</span>
+<span class="f-br-magenta">========================================================</span>
+<span class="f-white">You are standing outside "Lefty's Bar". The neon sign 
+buzzes overhead. You are wearing a white polyester leisure 
+suit. You smell like cheap cologne. You have $94 in your pocket.</span>
+
+<span class="f-br-yellow">Commands:</span>
+<span class="f-br-cyan">[L]</span> Look around
+<span class="f-br-cyan">[E]</span> Enter Lefty's Bar
+<span class="f-br-cyan">[T]</span> Talk to the bouncer
+<span class="f-br-red">[Q]</span> Quit to BBS
+
+<span class="f-white">What do you want to do? >> </span><span class="cursor"></span>`;
+      }
+  }
+
+  function handleLarryGame(val) {
+      let response = "";
+      if (val === 'L') {
+          response = "<span class='f-cyan'>It's a dingy alleyway. A stray dog is sniffing a fire hydrant. The door to Lefty's is propped open.</span>";
+      } else if (val === 'E') {
+          response = "<span class='f-br-red'>The bouncer steps in your way. \"Not with that suit, pal.\"</span>";
+      } else if (val === 'T') {
+          response = "<span class='f-white'>You try your best pickup line on the bouncer. He is not amused.</span>";
+      } else if (val === 'Q') {
+          showDoorGames();
+          return;
+      } else {
+          response = "<span class='f-red'>I don't understand that command.</span>";
+      }
+
+      terminal.innerHTML = `
+<span class="f-br-magenta">========================================================</span>
+<span class="f-br-white">      LEISURE SUIT LARRY - LEFTY's BAR (OUTSIDE)</span>
+<span class="f-br-magenta">========================================================</span>
+<span class="f-white">You are standing outside "Lefty's Bar".</span>
+
+${response}
+
+<span class="f-br-yellow">Commands:</span>
+<span class="f-br-cyan">[L]</span> Look around
+<span class="f-br-cyan">[E]</span> Enter Lefty's Bar
+<span class="f-br-cyan">[T]</span> Talk to the bouncer
+<span class="f-br-red">[Q]</span> Quit to BBS
+
+<span class="f-white">What do you want to do? >> </span><span class="cursor"></span>`;
+  }
+  // --- END LARRY LOGIC ---
 
   function showFileLibrary() {
     currentState = 'LIBRARY';
@@ -224,7 +327,9 @@
             currentState = 'MESSAGES';
         } else if (val === '2') {
             showFileLibrary();
-        } else if (val === '3') {
+        } else if (val === 'D') {
+            showDoorGames();
+        } else if (val === 'S') {
             terminal.innerHTML = `
 <span class="f-br-blue">═══</span><span class="f-br-white"> SYSTEM INFORMATION </span><span class="f-br-blue">═══════════════════════════</span>
  <span class="f-cyan">SysOp:    </span><span class="f-br-white">spataray</span>
@@ -234,10 +339,17 @@
 <span class="f-br-blue">════════════════════════════════════════════════════════</span>
 <span class="f-white">Press </span><span class="f-br-yellow">[M]</span><span class="f-white"> to return to menu... </span><span class="cursor"></span>`;
             currentState = 'INFO';
-        } else if (val === '4') {
+        } else if (val === 'Q') {
             terminal.innerHTML = "<span class='f-br-red'>NO CARRIER</span>\n\n<span class='f-white'>Logged off at " + new Date().toLocaleTimeString() + "</span>";
             connected = false;
         }
+    } else if (currentState === 'DOORS') {
+        if (val === '3') { startLarry(); }
+        else if (val === 'M') { showMainMenu(); }
+    } else if (currentState === 'LARRY_AGE') {
+        if (['A','B','C','D'].includes(val)) { handleLarryAge(val); }
+    } else if (currentState === 'LARRY_GAME') {
+        handleLarryGame(val);
     } else if (currentState === 'LIBRARY') {
         if (files[val]) { showCategory(val); }
         else if (val === 'M') { showMainMenu(); }
@@ -255,6 +367,6 @@
   });
 
 </script>
-<div id="version-tag" style="position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: rgba(170, 170, 170, 0.3); font-family: monospace;">v1.2.0 (2026-03-25 16:50 HST)</div>
+<div id="version-tag" style="position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: rgba(170, 170, 170, 0.3); font-family: monospace;">v1.3.0 (2026-03-25 16:55 HST)</div>
 </body>
 </html>
