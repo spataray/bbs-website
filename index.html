@@ -2,23 +2,63 @@
 <html>
 <head>
 <style>
+  :root {
+    --bg: #000000;
+    --black: #000000;
+    --red: #AA0000;    --br-red: #FF5555;
+    --green: #00AA00;  --br-green: #55FF55;
+    --yellow: #AA5500; --br-yellow: #FFFF55;
+    --blue: #0000AA;   --br-blue: #5555FF;
+    --magenta: #AA00AA;--br-magenta: #FF55FF;
+    --cyan: #00AAAA;   --br-cyan: #55FFFF;
+    --white: #AAAAAA;  --br-white: #FFFFFF;
+  }
+
   body {
-    background-color: #000;
-    color: #AAA;
+    background-color: var(--bg);
+    color: var(--white);
     font-family: 'Courier New', monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px;
+    padding: 20px;
     overflow: hidden;
+    position: relative;
   }
-  #terminal { width: 100%; max-width: 700px; white-space: pre-wrap; line-height: 1.2; }
-  .yellow { color: #FFFF55; font-weight: bold; }
-  .cyan { color: #00AAAA; }
-  .green { color: #55FF55; }
-  .red { color: #FF5555; }
-  .white { color: #FFF; }
-  .cursor { display: inline-block; width: 10px; height: 18px; background-color: #AAA; animation: blink 1s infinite; }
+
+  /* CRT Scanline Effect */
+  body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
+  }
+
+  #terminal { width: 100%; max-width: 800px; white-space: pre-wrap; line-height: 1.1; z-index: 1; }
+  
+  /* ANSI Colors */
+  .f-black { color: var(--black); } .b-black { background-color: var(--black); }
+  .f-red { color: var(--red); } .b-red { background-color: var(--red); }
+  .f-green { color: var(--green); } .b-green { background-color: var(--green); }
+  .f-yellow { color: var(--yellow); } .b-yellow { background-color: var(--yellow); }
+  .f-blue { color: var(--blue); } .b-blue { background-color: var(--blue); }
+  .f-magenta { color: var(--magenta); } .b-magenta { background-color: var(--magenta); }
+  .f-cyan { color: var(--cyan); } .b-cyan { background-color: var(--cyan); }
+  .f-white { color: var(--white); } .b-white { background-color: var(--white); }
+  
+  .f-br-red { color: var(--br-red); font-weight: bold; }
+  .f-br-green { color: var(--br-green); font-weight: bold; }
+  .f-br-yellow { color: var(--br-yellow); font-weight: bold; }
+  .f-br-blue { color: var(--br-blue); font-weight: bold; }
+  .f-br-magenta { color: var(--br-magenta); font-weight: bold; }
+  .f-br-cyan { color: var(--br-cyan); font-weight: bold; }
+  .f-br-white { color: var(--br-white); font-weight: bold; }
+
+  .cursor { display: inline-block; width: 10px; height: 18px; background-color: var(--white); animation: blink 1s infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   #hidden-input { position: absolute; opacity: 0; pointer-events: none; }
 </style>
@@ -27,84 +67,89 @@
 
 <input type="text" id="hidden-input" autocomplete="off">
 <div id="terminal">
-<span class="yellow">*** TERMINAL READY ***</span>
-Click anywhere to dial...
+<span class="f-br-yellow">*** TERMINAL READY ***</span>
+<span class="f-white">Click anywhere to dial...</span>
 <span class="cursor"></span>
 </div>
 
 <script>
   const terminal = document.getElementById('terminal');
   const input = document.getElementById('hidden-input');
-  
-  // Use a reliable modem sound link
   const modemSound = new Audio('https://www.soundjay.com/communication/modem-connect-01.mp3');
   
   let connected = false;
-  let currentState = 'OFFLINE'; // OFFLINE, MAIN, LIBRARY, CATEGORY, PROTOCOL, DOWNLOAD
+  let currentState = 'OFFLINE';
+
+  const splashArt = `
+<span class="f-br-magenta">      _    _  _  _      _               _    _  </span>
+<span class="f-br-magenta">     | |  | |(_)| |    | |             | |  | | </span>
+<span class="f-br-cyan">     | |  | | _ | |  __| |  ___   __ _ | |_ | | </span>
+<span class="f-br-cyan">     | |/\\| || || | / _\` | / __| / _\` || __|| | </span>
+<span class="f-br-blue">     \\  /\\  /| || || (_| || (__ | (_| || |_ |_| </span>
+<span class="f-br-blue">      \\/  \\/ |_||_| \\__,_| \\___| \\__,_| \\__|(_) </span>
+<span class="f-br-yellow">                                                </span>
+<span class="f-br-white">       ---= THE ULTIMATE SHAREWARE STOP =---     </span>
+`;
 
   async function startDialing() {
-    if (connected) {
-        input.focus();
-        return;
-    }
+    if (connected) { input.focus(); return; }
     
-    terminal.innerHTML = "ATDT 555-8291\n";
+    terminal.innerHTML = "<span class='f-br-white'>ATDT 555-8291</span>\n";
     modemSound.play();
     
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 2000));
     terminal.innerHTML += "DIALING...\n";
     
     await new Promise(r => setTimeout(r, 4000));
-    terminal.innerHTML += "<span class='green'>CONNECT 14400 / ARQ</span>\n\n";
+    terminal.innerHTML += "<span class='f-br-green'>CONNECT 14400 / ARQ</span>\n\n";
     
-    await new Promise(r => setTimeout(r, 1000));
-    terminal.innerHTML += "<span class='cyan'>Welcome back to Wildcat! BBS, User #42!</span>\n\n";
+    await new Promise(r => setTimeout(r, 800));
+    terminal.innerHTML = splashArt;
+    terminal.innerHTML += "\n<span class='f-br-yellow'>Press any key to enter...</span><span class='cursor'></span>";
     
-    await new Promise(r => setTimeout(r, 1500));
     connected = true;
+    currentState = 'SPLASH';
     input.focus();
-    showMainMenu();
   }
 
   function showMainMenu() {
     currentState = 'MAIN';
-    const menu = `
-<span class="cyan">═══ WILDCAT! BBS MAIN MENU ════════════════════</span>
- <span class="yellow">[1]</span> Message Board
- <span class="yellow">[2]</span> File Library
- <span class="yellow">[3]</span> Log Off
-<span class="cyan">═══════════════════════════════════════════════</span>
-Command >> <span class="cursor"></span>`;
-    terminal.innerHTML = menu;
+    terminal.innerHTML = `
+<span class="f-br-blue">═══</span><span class="f-br-white"> WILDCAT! BBS MAIN MENU </span><span class="f-br-blue">══════════════════════════</span>
+ <span class="f-br-yellow">[1]</span> <span class="f-br-cyan">Message Board</span>
+ <span class="f-br-yellow">[2]</span> <span class="f-br-cyan">File Library</span>
+ <span class="f-br-yellow">[3]</span> <span class="f-br-cyan">System Information</span>
+ <span class="f-br-yellow">[4]</span> <span class="f-br-red">Log Off</span>
+<span class="f-br-blue">════════════════════════════════════════════════════════</span>
+<span class="f-white">Command >> </span><span class="cursor"></span>`;
   }
 
   function showFileLibrary() {
     currentState = 'LIBRARY';
-    const menu = `
-<span class="cyan">═══ FILE LIBRARY CATEGORIES ═══════════════════</span>
- <span class="yellow">[U]</span> Utilities (PKZIP, Norton, etc)
- <span class="yellow">[G]</span> Games (Doom, Wolf3D, Keen)
- <span class="yellow">[A]</span> Apps (Procomm, Telix)
- <span class="yellow">[M]</span> Back to Main Menu
-<span class="cyan">═══════════════════════════════════════════════</span>
-Select Category >> <span class="cursor"></span>`;
-    terminal.innerHTML = menu;
+    terminal.innerHTML = `
+<span class="f-br-blue">═══</span><span class="f-br-white"> FILE LIBRARY CATEGORIES </span><span class="f-br-blue">═════════════════════════</span>
+ <span class="f-br-yellow">[U]</span> <span class="f-br-cyan">Utilities (PKZIP, Norton, etc)</span>
+ <span class="f-br-yellow">[G]</span> <span class="f-br-cyan">Games (Doom, Wolf3D, Keen)</span>
+ <span class="f-br-yellow">[A]</span> <span class="f-br-cyan">Apps (Procomm, Telix)</span>
+ <span class="f-br-yellow">[M]</span> <span class="f-br-white">Back to Main Menu</span>
+<span class="f-br-blue">════════════════════════════════════════════════════════</span>
+<span class="f-white">Select Category >> </span><span class="cursor"></span>`;
   }
 
   const files = {
     'U': [
-        { name: 'PKZ204G.EXE', desc: 'PKZIP 2.04g Compression Utility', size: '202k' },
-        { name: 'DS20.ZIP', desc: 'Directory Sort Utility', size: '15k' },
-        { name: 'LHA213.EXE', desc: 'LHArc File Archiver', size: '45k' }
+        { name: 'PKZ204G.EXE', desc: 'PKZIP 2.04g Utility', size: '202k' },
+        { name: 'DS20.ZIP', desc: 'Directory Sort', size: '15k' },
+        { name: 'LHA213.EXE', desc: 'LHArc Archiver', size: '45k' }
     ],
     'G': [
         { name: 'DOOM_SW.ZIP', desc: 'DOOM Shareware v1.9', size: '2.4M' },
-        { name: 'WOLF3D.ZIP', desc: 'Wolfenstein 3D Episode 1', size: '1.2M' },
-        { name: 'KEEN1.ZIP', desc: 'Commander Keen: Marooned on Mars', size: '350k' }
+        { name: 'WOLF3D.ZIP', desc: 'Wolfenstein 3D Ep1', size: '1.2M' },
+        { name: 'KEEN1.ZIP', desc: 'Commander Keen 1', size: '350k' }
     ],
     'A': [
-        { name: 'PCPLUS.ZIP', desc: 'Procomm Plus v2.01 Terminal', size: '890k' },
-        { name: 'TELIX321.ZIP', desc: 'Telix v3.21 Communications', size: '540k' }
+        { name: 'PCPLUS.ZIP', desc: 'Procomm Plus v2.01', size: '890k' },
+        { name: 'TELIX321.ZIP', desc: 'Telix v3.21 Comm', size: '540k' }
     ]
   };
 
@@ -115,50 +160,52 @@ Select Category >> <span class="cursor"></span>`;
     selectedCategory = cat;
     currentState = 'CATEGORY';
     const catFiles = files[cat];
-    let fileList = `<span class="cyan">═══ FILES IN CATEGORY: ${cat} ══════════════════</span>\n`;
+    let fileList = `<span class="f-br-blue">═══</span><span class="f-br-white"> FILES IN CATEGORY: ${cat} </span><span class="f-br-blue">═══════════════════</span>\n`;
     catFiles.forEach((f, i) => {
-        fileList += ` <span class="yellow">[${i+1}]</span> <span class="white">${f.name.padEnd(12)}</span> ${f.size.padStart(6)} - ${f.desc}\n`;
+        fileList += ` <span class="f-br-yellow">[${i+1}]</span> <span class="f-br-white">${f.name.padEnd(12)}</span> <span class="f-br-green">${f.size.padStart(6)}</span> <span class="f-cyan">- ${f.desc}</span>\n`;
     });
-    fileList += `<span class="cyan">═══════════════════════════════════════════════</span>\n`;
-    fileList += `Select File (1-${catFiles.length}) or <span class="yellow">[M]</span>ain Menu >> <span class="cursor"></span>`;
+    fileList += `<span class="f-br-blue">════════════════════════════════════════════════════════</span>\n`;
+    fileList += `<span class="f-white">Select File (1-${catFiles.length}) or </span><span class="f-br-yellow">[M]</span><span class="f-white">ain Menu >> </span><span class="cursor"></span>`;
     terminal.innerHTML = fileList;
   }
 
   function showProtocol(file) {
     selectedFile = file;
     currentState = 'PROTOCOL';
-    const menu = `
-<span class="cyan">═══ SELECT DOWNLOAD PROTOCOL ══════════════════</span>
- <span class="yellow">[X]</span> XMODEM (Checksum)
- <span class="yellow">[Y]</span> YMODEM (Batch)
- <span class="yellow">[Z]</span> ZMODEM (Streaming)
- <span class="yellow">[Q]</span> Quit Download
-<span class="cyan">═══════════════════════════════════════════════</span>
-Protocol >> <span class="cursor"></span>`;
-    terminal.innerHTML = menu;
+    terminal.innerHTML = `
+<span class="f-br-blue">═══</span><span class="f-br-white"> SELECT DOWNLOAD PROTOCOL </span><span class="f-br-blue">════════════════════════</span>
+ <span class="f-br-yellow">[X]</span> <span class="f-br-cyan">XMODEM (Checksum)</span>
+ <span class="f-br-yellow">[Y]</span> <span class="f-br-cyan">YMODEM (Batch)</span>
+ <span class="f-br-yellow">[Z]</span> <span class="f-br-magenta">ZMODEM (Streaming - Recommended)</span>
+ <span class="f-br-yellow">[Q]</span> <span class="f-br-red">Quit Download</span>
+<span class="f-br-blue">════════════════════════════════════════════════════════</span>
+<span class="f-white">Protocol >> </span><span class="cursor"></span>`;
   }
 
   async function startDownload(protocol) {
     currentState = 'DOWNLOAD';
-    terminal.innerHTML = `<span class="green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n`;
-    terminal.innerHTML += `<span class="white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n`;
+    terminal.innerHTML = `<span class="f-br-green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n`;
+    terminal.innerHTML += `<span class="f-br-white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n`;
     
-    const barWidth = 20;
+    const barWidth = 25;
     for (let i = 0; i <= 100; i += 5) {
         const filled = Math.floor(i / (100 / barWidth));
         const empty = barWidth - filled;
-        const bar = '[' + '='.repeat(filled) + '>'.repeat(filled > 0 && i < 100 ? 1 : 0) + ' '.repeat(Math.max(0, empty - (i < 100 ? 1 : 0))) + ']';
+        const bar = '<span class="f-br-blue">[</span>' + 
+                    '<span class="f-br-yellow">' + '█'.repeat(filled) + '</span>' + 
+                    '<span class="f-br-black">' + '░'.repeat(empty) + '</span>' + 
+                    '<span class="f-br-blue">]</span>';
         
-        terminal.innerHTML = `<span class="green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n` +
-                             `<span class="white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n` +
-                             `<span class="yellow">${bar} ${i}%</span>\n` +
-                             `Block: ${Math.floor(i * 1.5)}/150  Errors: 0`;
+        terminal.innerHTML = `<span class="f-br-green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n` +
+                             `<span class="f-br-white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n` +
+                             `${bar} <span class="f-br-white">${i}%</span>\n` +
+                             `<span class="f-cyan">Block: ${Math.floor(i * 1.5)}/150  Errors: </span><span class="f-br-red">0</span>`;
         
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => setTimeout(r, 200));
     }
     
-    terminal.innerHTML += `\n\n<span class="green">*** TRANSFER COMPLETE ***</span>\n`;
-    terminal.innerHTML += `Press <span class="yellow">[M]</span> to return to menu... <span class="cursor"></span>`;
+    terminal.innerHTML += `\n\n<span class="f-br-green">*** TRANSFER COMPLETE ***</span>\n`;
+    terminal.innerHTML += `<span class="f-white">Press </span><span class="f-br-yellow">[M]</span><span class="f-white"> to return to menu... </span><span class="cursor"></span>`;
   }
 
   input.addEventListener('input', (e) => {
@@ -166,44 +213,48 @@ Protocol >> <span class="cursor"></span>`;
     const val = e.target.value.toUpperCase();
     input.value = ""; 
     
+    if (currentState === 'SPLASH') {
+        showMainMenu();
+        return;
+    }
+
     if (currentState === 'MAIN') {
         if (val === '1') {
-            terminal.innerHTML = "LOADING MESSAGES...\n[M] Back to Main Menu <span class='cursor'></span>";
+            terminal.innerHTML = "<span class='f-br-white'>LOADING MESSAGES...</span>\n<span class='f-br-yellow'>[M]</span> <span class='f-white'>Back to Main Menu</span> <span class='cursor'></span>";
             currentState = 'MESSAGES';
         } else if (val === '2') {
             showFileLibrary();
         } else if (val === '3') {
-            terminal.innerHTML = "<span class='red'>NO CARRIER</span>\n\nLogged off at " + new Date().toLocaleTimeString();
+            terminal.innerHTML = `
+<span class="f-br-blue">═══</span><span class="f-br-white"> SYSTEM INFORMATION </span><span class="f-br-blue">═══════════════════════════</span>
+ <span class="f-cyan">SysOp:    </span><span class="f-br-white">spataray</span>
+ <span class="f-cyan">Location: </span><span class="f-br-white">Honolulu, HI</span>
+ <span class="f-cyan">Software: </span><span class="f-br-magenta">Wildcat! v4.0</span>
+ <span class="f-cyan">Nodes:    </span><span class="f-br-green">1</span>
+<span class="f-br-blue">════════════════════════════════════════════════════════</span>
+<span class="f-white">Press </span><span class="f-br-yellow">[M]</span><span class="f-white"> to return to menu... </span><span class="cursor"></span>`;
+            currentState = 'INFO';
+        } else if (val === '4') {
+            terminal.innerHTML = "<span class='f-br-red'>NO CARRIER</span>\n\n<span class='f-white'>Logged off at " + new Date().toLocaleTimeString() + "</span>";
             connected = false;
         }
     } else if (currentState === 'LIBRARY') {
-        if (files[val]) {
-            showCategory(val);
-        } else if (val === 'M') {
-            showMainMenu();
-        }
+        if (files[val]) { showCategory(val); }
+        else if (val === 'M') { showMainMenu(); }
     } else if (currentState === 'CATEGORY') {
         const index = parseInt(val) - 1;
         const catFiles = files[selectedCategory];
-        if (!isNaN(index) && catFiles[index]) {
-            showProtocol(catFiles[index]);
-        } else if (val === 'M') {
-            showMainMenu();
-        }
+        if (!isNaN(index) && catFiles[index]) { showProtocol(catFiles[index]); }
+        else if (val === 'M') { showMainMenu(); }
     } else if (currentState === 'PROTOCOL') {
-        if (['X', 'Y', 'Z'].includes(val)) {
-            startDownload(val + 'MODEM');
-        } else if (val === 'Q') {
-            showCategory(selectedCategory);
-        }
-    } else if (currentState === 'DOWNLOAD' || currentState === 'MESSAGES') {
-        if (val === 'M') {
-            showMainMenu();
-        }
+        if (['X', 'Y', 'Z'].includes(val)) { startDownload(val + 'MODEM'); }
+        else if (val === 'Q') { showCategory(selectedCategory); }
+    } else if (['DOWNLOAD', 'MESSAGES', 'INFO'].includes(currentState)) {
+        if (val === 'M') { showMainMenu(); }
     }
   });
 
 </script>
-<div id="version-tag" style="position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: rgba(170, 170, 170, 0.3); font-family: monospace;">v1.1.0 (2026-03-25 16:37 HST)</div>
+<div id="version-tag" style="position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: rgba(170, 170, 170, 0.3); font-family: monospace;">v1.2.0 (2026-03-25 16:50 HST)</div>
 </body>
 </html>
