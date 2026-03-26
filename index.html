@@ -12,10 +12,12 @@
     padding: 40px;
     overflow: hidden;
   }
-  #terminal { width: 100%; max-width: 700px; white-space: pre-wrap; }
+  #terminal { width: 100%; max-width: 700px; white-space: pre-wrap; line-height: 1.2; }
   .yellow { color: #FFFF55; font-weight: bold; }
   .cyan { color: #00AAAA; }
   .green { color: #55FF55; }
+  .red { color: #FF5555; }
+  .white { color: #FFF; }
   .cursor { display: inline-block; width: 10px; height: 18px; background-color: #AAA; animation: blink 1s infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   #hidden-input { position: absolute; opacity: 0; pointer-events: none; }
@@ -38,6 +40,7 @@ Click anywhere to dial...
   const modemSound = new Audio('https://www.soundjay.com/communication/modem-connect-01.mp3');
   
   let connected = false;
+  let currentState = 'OFFLINE'; // OFFLINE, MAIN, LIBRARY, CATEGORY, PROTOCOL, DOWNLOAD
 
   async function startDialing() {
     if (connected) {
@@ -45,11 +48,9 @@ Click anywhere to dial...
         return;
     }
     
-    // 1. Initial Dialing Text
     terminal.innerHTML = "ATDT 555-8291\n";
     modemSound.play();
     
-    // 2. Wait for the sound to reach the "handshake" part (simulated delay)
     await new Promise(r => setTimeout(r, 3000));
     terminal.innerHTML += "DIALING...\n";
     
@@ -57,14 +58,18 @@ Click anywhere to dial...
     terminal.innerHTML += "<span class='green'>CONNECT 14400 / ARQ</span>\n\n";
     
     await new Promise(r => setTimeout(r, 1000));
+    terminal.innerHTML += "<span class='cyan'>Welcome back to Wildcat! BBS, User #42!</span>\n\n";
+    
+    await new Promise(r => setTimeout(r, 1500));
     connected = true;
     input.focus();
     showMainMenu();
   }
 
   function showMainMenu() {
+    currentState = 'MAIN';
     const menu = `
-<span class="cyan">═══ WELCOME TO THE RETRO-NET BBS ══════════════</span>
+<span class="cyan">═══ WILDCAT! BBS MAIN MENU ════════════════════</span>
  <span class="yellow">[1]</span> Message Board
  <span class="yellow">[2]</span> File Library
  <span class="yellow">[3]</span> Log Off
@@ -73,42 +78,132 @@ Command >> <span class="cursor"></span>`;
     terminal.innerHTML = menu;
   }
 
-  // Handle keyboard input after connection
-  input.addEventListener('input', (e) => {
-    if (!connected) return;
-    const val = e.target.value;
-    input.value = ""; 
-    
-    if (val === '1') {
-        terminal.innerHTML = "LOADING MESSAGES...\n[M] Back to Main Menu";
-    } else if (val.toLowerCase() === 'm') {
-        showMainMenu();
-    }
-    // Add more logic here for other keys!
-  });
-    async function startDialing() {
-    if (connected) return;
-    
-    // The "Hayes" command to dial
-    terminal.innerHTML = "ATDT 555-8291\n";
-    modemSound.play();
-    
-    // Simulate the time it takes to handshake
-    await new Promise(r => setTimeout(r, 2000));
-    terminal.innerHTML += "CONNECT 14400/V.42bis\n";
-    
-    await new Promise(r => setTimeout(r, 1000));
-    terminal.innerHTML += "<span class='green'>Checking Line... Recognized.</span>\n";
-    
-    await new Promise(r => setTimeout(r, 800));
-    terminal.innerHTML += "<span class='cyan'>Welcome back, User #42!</span>\n\n";
-
-    await new Promise(r => setTimeout(r, 1500));
-    connected = true;
-    input.focus();
-    showMainMenu();
+  function showFileLibrary() {
+    currentState = 'LIBRARY';
+    const menu = `
+<span class="cyan">═══ FILE LIBRARY CATEGORIES ═══════════════════</span>
+ <span class="yellow">[U]</span> Utilities (PKZIP, Norton, etc)
+ <span class="yellow">[G]</span> Games (Doom, Wolf3D, Keen)
+ <span class="yellow">[A]</span> Apps (Procomm, Telix)
+ <span class="yellow">[M]</span> Back to Main Menu
+<span class="cyan">═══════════════════════════════════════════════</span>
+Select Category >> <span class="cursor"></span>`;
+    terminal.innerHTML = menu;
   }
 
+  const files = {
+    'U': [
+        { name: 'PKZ204G.EXE', desc: 'PKZIP 2.04g Compression Utility', size: '202k' },
+        { name: 'DS20.ZIP', desc: 'Directory Sort Utility', size: '15k' },
+        { name: 'LHA213.EXE', desc: 'LHArc File Archiver', size: '45k' }
+    ],
+    'G': [
+        { name: 'DOOM_SW.ZIP', desc: 'DOOM Shareware v1.9', size: '2.4M' },
+        { name: 'WOLF3D.ZIP', desc: 'Wolfenstein 3D Episode 1', size: '1.2M' },
+        { name: 'KEEN1.ZIP', desc: 'Commander Keen: Marooned on Mars', size: '350k' }
+    ],
+    'A': [
+        { name: 'PCPLUS.ZIP', desc: 'Procomm Plus v2.01 Terminal', size: '890k' },
+        { name: 'TELIX321.ZIP', desc: 'Telix v3.21 Communications', size: '540k' }
+    ]
+  };
+
+  let selectedCategory = '';
+  let selectedFile = null;
+
+  function showCategory(cat) {
+    selectedCategory = cat;
+    currentState = 'CATEGORY';
+    const catFiles = files[cat];
+    let fileList = `<span class="cyan">═══ FILES IN CATEGORY: ${cat} ══════════════════</span>\n`;
+    catFiles.forEach((f, i) => {
+        fileList += ` <span class="yellow">[${i+1}]</span> <span class="white">${f.name.padEnd(12)}</span> ${f.size.padStart(6)} - ${f.desc}\n`;
+    });
+    fileList += `<span class="cyan">═══════════════════════════════════════════════</span>\n`;
+    fileList += `Select File (1-${catFiles.length}) or <span class="yellow">[M]</span>ain Menu >> <span class="cursor"></span>`;
+    terminal.innerHTML = fileList;
+  }
+
+  function showProtocol(file) {
+    selectedFile = file;
+    currentState = 'PROTOCOL';
+    const menu = `
+<span class="cyan">═══ SELECT DOWNLOAD PROTOCOL ══════════════════</span>
+ <span class="yellow">[X]</span> XMODEM (Checksum)
+ <span class="yellow">[Y]</span> YMODEM (Batch)
+ <span class="yellow">[Z]</span> ZMODEM (Streaming)
+ <span class="yellow">[Q]</span> Quit Download
+<span class="cyan">═══════════════════════════════════════════════</span>
+Protocol >> <span class="cursor"></span>`;
+    terminal.innerHTML = menu;
+  }
+
+  async function startDownload(protocol) {
+    currentState = 'DOWNLOAD';
+    terminal.innerHTML = `<span class="green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n`;
+    terminal.innerHTML += `<span class="white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n`;
+    
+    const barWidth = 20;
+    for (let i = 0; i <= 100; i += 5) {
+        const filled = Math.floor(i / (100 / barWidth));
+        const empty = barWidth - filled;
+        const bar = '[' + '='.repeat(filled) + '>'.repeat(filled > 0 && i < 100 ? 1 : 0) + ' '.repeat(Math.max(0, empty - (i < 100 ? 1 : 0))) + ']';
+        
+        terminal.innerHTML = `<span class="green">Initializing ${protocol} Transfer for ${selectedFile.name}...</span>\n` +
+                             `<span class="white">Sending ${selectedFile.name} (${selectedFile.size})</span>\n\n` +
+                             `<span class="yellow">${bar} ${i}%</span>\n` +
+                             `Block: ${Math.floor(i * 1.5)}/150  Errors: 0`;
+        
+        await new Promise(r => setTimeout(r, 300));
+    }
+    
+    terminal.innerHTML += `\n\n<span class="green">*** TRANSFER COMPLETE ***</span>\n`;
+    terminal.innerHTML += `Press <span class="yellow">[M]</span> to return to menu... <span class="cursor"></span>`;
+  }
+
+  input.addEventListener('input', (e) => {
+    if (!connected) return;
+    const val = e.target.value.toUpperCase();
+    input.value = ""; 
+    
+    if (currentState === 'MAIN') {
+        if (val === '1') {
+            terminal.innerHTML = "LOADING MESSAGES...\n[M] Back to Main Menu <span class='cursor'></span>";
+            currentState = 'MESSAGES';
+        } else if (val === '2') {
+            showFileLibrary();
+        } else if (val === '3') {
+            terminal.innerHTML = "<span class='red'>NO CARRIER</span>\n\nLogged off at " + new Date().toLocaleTimeString();
+            connected = false;
+        }
+    } else if (currentState === 'LIBRARY') {
+        if (files[val]) {
+            showCategory(val);
+        } else if (val === 'M') {
+            showMainMenu();
+        }
+    } else if (currentState === 'CATEGORY') {
+        const index = parseInt(val) - 1;
+        const catFiles = files[selectedCategory];
+        if (!isNaN(index) && catFiles[index]) {
+            showProtocol(catFiles[index]);
+        } else if (val === 'M') {
+            showMainMenu();
+        }
+    } else if (currentState === 'PROTOCOL') {
+        if (['X', 'Y', 'Z'].includes(val)) {
+            startDownload(val + 'MODEM');
+        } else if (val === 'Q') {
+            showCategory(selectedCategory);
+        }
+    } else if (currentState === 'DOWNLOAD' || currentState === 'MESSAGES') {
+        if (val === 'M') {
+            showMainMenu();
+        }
+    }
+  });
+
 </script>
+<div id="version-tag" style="position: fixed; bottom: 5px; right: 5px; font-size: 10px; color: rgba(170, 170, 170, 0.3); font-family: monospace;">v1.1.0 (2026-03-25 16:37 HST)</div>
 </body>
 </html>
